@@ -1598,11 +1598,25 @@ footer strong{
                 <input
                     type="range"
                     id="angle"
-                    min="-20"
-                    max="20"
+                    min="-45"
+                    max="45"
                     value="0"
+                    step="1"
                     oninput="updateExperiment()"
                 >
+
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+                    <button type="button" class="btn btnSecondary" style="padding:8px 12px" onclick="setAngle(0)">0°</button>
+                    <button type="button" class="btn btnSecondary" style="padding:8px 12px" onclick="setAngle(15)">+15°</button>
+                    <button type="button" class="btn btnSecondary" style="padding:8px 12px" onclick="setAngle(30)">+30°</button>
+                    <button type="button" class="btn btnSecondary" style="padding:8px 12px" onclick="setAngle(45)">+45°</button>
+                    <button type="button" class="btn btnSecondary" style="padding:8px 12px" onclick="setAngle(-15)">−15°</button>
+                    <button type="button" class="btn btnSecondary" style="padding:8px 12px" onclick="setAngle(-30)">−30°</button>
+                    <button type="button" class="btn btnSecondary" style="padding:8px 12px" onclick="setAngle(-45)">−45°</button>
+                </div>
+                <small style="display:block;color:var(--muted);margin-top:10px;line-height:1.5">
+                    0°＝直立；正負角度代表向不同方向傾斜。這是教育實驗的模擬範圍，不是官方角度限制。
+                </small>
 
             </div>
 
@@ -1679,33 +1693,11 @@ footer strong{
 
         <div class="challengeQuestion"
              id="quizQuestion">
-            如果把陀螺的發射力提高，
-            以下哪一項最可能發生？
+            正在準備今日挑戰……
         </div>
 
         <div class="options"
              id="quizOptions">
-
-            <button class="option"
-                    onclick="answerQuiz(this, false)">
-                A. 一定完全不會移動
-            </button>
-
-            <button class="option"
-                    onclick="answerQuiz(this, true)">
-                B. 通常可以有更高初始轉速
-            </button>
-
-            <button class="option"
-                    onclick="answerQuiz(this, false)">
-                C. 重量立即變成兩倍
-            </button>
-
-            <button class="option"
-                    onclick="answerQuiz(this, false)">
-                D. Stadium 會自動變大
-            </button>
-
         </div>
 
         <p id="quizFeedback"
@@ -2726,6 +2718,12 @@ function addMessage(text,type){
    EXPERIMENT
 ========================================================= */
 
+function setAngle(value){
+    const angle = document.getElementById("angle");
+    angle.value = value;
+    updateExperiment();
+}
+
 function updateExperiment(){
 
     const weight =
@@ -2758,23 +2756,26 @@ function calculateExperiment(weight,power,angle){
        Not a real competitive performance calculator.
     */
 
+    const tilt = Math.abs(angle);
+    const angleFactor = tilt / 45;
+
     let stability =
         45
         + (weight-35)*0.9
         + power*0.08
-        - Math.abs(angle)*1.3;
+        - angleFactor*32;
 
     let attack =
         20
         + power*0.65
-        + Math.abs(angle)*1.2
+        + angleFactor*28
         + (weight-35)*0.35;
 
     let stamina =
         45
         + (weight-35)*0.7
         + power*0.12
-        - Math.abs(angle)*0.9;
+        - angleFactor*24;
 
     stability =
         Math.max(5,Math.min(100,stability));
@@ -2814,6 +2815,9 @@ function calculateExperiment(weight,power,angle){
     }
 
     result +=
+        "\n\n🎯 目前角度：" + angle + "°。傾斜越大，模擬中越可能改變移動路線及接觸方式。";
+
+    result +=
         "\n\n注意：這是教育用途的簡化模型，不是真實比賽性能計算器。";
 
     document.getElementById("resultText")
@@ -2843,41 +2847,134 @@ function runExperiment(){
    QUIZ
 ========================================================= */
 
-function answerQuiz(button,correct){
+const challengeQuestions = [
+    {
+        q:"如果陀螺的發射力增加，以下哪一項通常會先改變？",
+        options:["重量增加","初始轉速可能提高","Stadium 變大","Blade 自動改變"],
+        answer:1,
+        feedback:"🎉 正確！發射力增加通常可以提供更高的初始轉速，但實際表現仍受陀螺設計、角度、Stadium 等因素影響。"
+    },
+    {
+        q:"兩個陀螺重量相同，但重量分布不同，結果可能怎樣？",
+        options:["一定完全一樣","可能有不同的旋轉及碰撞表現","其中一個一定不能旋轉","重量會自動改變"],
+        answer:1,
+        feedback:"🎉 正確！除了總重量，重量分布也會影響旋轉和碰撞表現。"
+    },
+    {
+        q:"如果只想研究「發射角度」的影響，哪一種做法最科學？",
+        options:["同時改變重量和發射力","每次都換不同陀螺","固定重量和發射力，只改變角度","只測一次"],
+        answer:2,
+        feedback:"🎉 正確！一次只改變一個變量，才較容易判斷角度造成的影響。"
+    },
+    {
+        q:"發射角度由 0° 改成較大的傾斜角度，最直接可能改變甚麼？",
+        options:["陀螺的顏色","陀螺在 Stadium 中的運動路線及接觸方式","陀螺的品牌","Ratchet 的名稱"],
+        answer:1,
+        feedback:"🎉 正確！傾斜角度可能改變陀螺與 Stadium 接觸後的運動路線及碰撞方式。"
+    },
+    {
+        q:"為甚麼陀螺高速旋轉時通常比較穩定？",
+        options:["因為它會變重","因為它具有角動量","因為 Stadium 會托住它","因為空氣把它固定"],
+        answer:1,
+        feedback:"🎉 正確！旋轉中的陀螺具有角動量，會傾向維持原本的旋轉狀態。"
+    },
+    {
+        q:"攻擊型陀螺的主要策略是甚麼？",
+        options:["完全避免碰撞","主動尋找碰撞機會","只在中央慢慢旋轉","令自己停止"],
+        answer:1,
+        feedback:"🎉 正確！攻擊型重視主動移動及尋找有效的碰撞機會。"
+    },
+    {
+        q:"研究「耐久力」時，哪一項最適合作為觀察資料？",
+        options:["陀螺的顏色","旋轉時間","包裝大小","聲音大小"],
+        answer:1,
+        feedback:"🎉 正確！可以量度旋轉時間，作為比較耐久表現的一項資料。"
+    },
+    {
+        q:"如果想比較 0°、15°、30° 和 45°，應該怎樣做？",
+        options:["重量和發射力都保持相同","每個角度都換不同重量","每次都改變三個變量","只猜答案不做實驗"],
+        answer:0,
+        feedback:"🎉 正確！固定其他條件，只改變角度，就是很好的控制變量實驗。"
+    }
+];
 
-    const options =
-        document.querySelectorAll(".option");
+let currentChallenge = null;
 
-    options.forEach(
-        item=>item.disabled=true
-    );
+function loadRandomChallenge(){
+    let history = [];
+    try {
+        history = JSON.parse(sessionStorage.getItem("beybladeChallengeHistory") || "[]");
+    } catch(e) {}
 
-    if(correct){
+    let available = challengeQuestions
+        .map((_,i)=>i)
+        .filter(i=>!history.includes(i));
 
-        button.classList.add("correct");
-
-        document.getElementById("quizFeedback")
-            .textContent=
-            "🎉 正確！發射力增加通常可以提供較高的初始轉速，但實際表現仍會受到陀螺設計、角度、Stadium 和其他因素影響。";
-
-    }else{
-
-        button.classList.add("wrong");
-
-        document.getElementById("quizFeedback")
-            .textContent=
-            "💡 再想想！發射力改變的是初始運動狀態，不會令陀螺重量突然改變。";
-
+    if(available.length === 0){
+        available = challengeQuestions.map((_,i)=>i);
     }
 
+    const index = available[Math.floor(Math.random()*available.length)];
+    currentChallenge = challengeQuestions[index];
+
+    history.push(index);
+    if(history.length > 4) history = history.slice(-4);
+    try {
+        sessionStorage.setItem("beybladeChallengeHistory", JSON.stringify(history));
+    } catch(e) {}
+
+    document.getElementById("quizQuestion").textContent = currentChallenge.q;
+
+    const options = document.getElementById("quizOptions");
+    options.innerHTML = "";
+
+    currentChallenge.options.forEach((text,i)=>{
+        const btn = document.createElement("button");
+        btn.className = "option";
+        btn.textContent = String.fromCharCode(65+i) + ". " + text;
+        btn.onclick = ()=>answerQuiz(btn, i === currentChallenge.answer);
+        options.appendChild(btn);
+    });
+
+    document.getElementById("quizFeedback").textContent =
+        "💭 先自己預測，再選擇答案！";
 }
 
+function answerQuiz(button,correct){
+    const options = document.querySelectorAll("#quizOptions .option");
+    options.forEach(item=>item.disabled=true);
+
+    if(correct){
+        button.classList.add("correct");
+        document.getElementById("quizFeedback").textContent =
+            currentChallenge.feedback;
+    }else{
+        button.classList.add("wrong");
+        document.getElementById("quizFeedback").textContent =
+            "💡 再想想！答案是 " +
+            String.fromCharCode(65+currentChallenge.answer) +
+            "。";
+    }
+
+    setTimeout(()=>{
+        const next = document.createElement("button");
+        next.className = "btn btnSecondary";
+        next.style.marginTop = "14px";
+        next.textContent = "🔄 換一條挑戰題";
+        next.onclick = ()=>{
+            next.remove();
+            loadRandomChallenge();
+        };
+        document.querySelector(".challenge").appendChild(next);
+    },250);
+}
 
 /* =========================================================
    START
 ========================================================= */
 
 updateExperiment();
+loadRandomChallenge();
 
 </script>
 
